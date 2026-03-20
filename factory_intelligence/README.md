@@ -105,7 +105,7 @@ $ poetry run python -m factory_intelligence.mcp_server
 }
 ```
  
-### Example Output (Productivity)
+### Example Output — Productivity
 ```json
 {
   "tool": "get_productivity_kpi",
@@ -116,13 +116,14 @@ $ poetry run python -m factory_intelligence.mcp_server
   "result": {
     "summary": {
       "kpi_name": "Productivity",
-      "total_production": 12500.0,
-      "good_bottles": 12100.0,
-      "bad_bottles": 400.0,
+      "total_production": 54074.0,
+      "good_bottles": 53473.0,
+      "bad_bottles": 601.0,
       "unit": "bottles"
     },
     "timeseries": [
-      {"timestamp": "2025-12-10T00:00:00+00:00", "good": 8.0, "bad": 0.0, "total": 8.0}
+      {"timestamp": "2025-12-10T00:00:00+00:00", "good": 0.0, "bad": 0.0, "total": 0.0},
+      {"timestamp": "2025-12-10T00:01:00+00:00", "good": 0.0, "bad": 0.0, "total": 0.0}
     ],
     "metadata": {
       "data_source": "agg_counter_1min",
@@ -131,6 +132,116 @@ $ poetry run python -m factory_intelligence.mcp_server
   },
   "status": "ok",
   "errors": []
+}
+```
+
+### Example Output — Quality
+```json
+{
+  "tool": "get_quality_kpi",
+  "inputs": {
+    "start_time": "2025-12-10T00:00:00Z",
+    "end_time": "2025-12-10T23:59:59Z"
+  },
+  "result": {
+    "summary": {
+      "kpi_name": "Quality",
+      "yield_pct": 98.89,
+      "defect_rate_pct": 1.11,
+      "good_bottles": 53473.0,
+      "bad_bottles": 601.0,
+      "total_production": 54074.0,
+      "unit": "percent"
+    },
+    "timeseries": [
+      {"timestamp": "2025-12-10T00:00:00+00:00", "yield_pct": 0.0, "good": 0.0, "bad": 0.0}
+    ],
+    "metadata": {
+      "data_source": "agg_counter_1min",
+      "computation_note": "Yield = (good / total) * 100"
+    }
+  },
+  "status": "ok",
+  "errors": []
+}
+```
+
+### Example Output — Downtime
+```json
+{
+  "tool": "get_downtime_kpi",
+  "inputs": {
+    "start_time": "2025-12-10T00:00:00Z",
+    "end_time": "2025-12-10T23:59:59Z"
+  },
+  "result": {
+    "summary": {
+      "kpi_name": "Downtime",
+      "availability_pct": 44.73,
+      "downtime_seconds": 47750,
+      "downtime_minutes": 795.83,
+      "uptime_seconds": 38650,
+      "uptime_minutes": 644.17,
+      "downtime_intervals": 4775,
+      "uptime_intervals": 3865,
+      "unit": "percent"
+    },
+    "timeseries": [],
+    "metadata": {
+      "data_source": "agg_counter_10sec_delta",
+      "computation_note": "Each 10sec interval with 0 production = downtime"
+    }
+  },
+  "status": "ok",
+  "errors": []
+}
+```
+
+### Example Output — Downtime Alarms
+```json
+{
+  "tool": "get_downtime_alarms",
+  "inputs": {
+    "start_time": "2025-12-10T00:00:00Z",
+    "end_time": "2025-12-10T23:59:59Z"
+  },
+  "result": {
+    "summary": {
+      "kpi_name": "Downtime Alarms",
+      "downtime_events": 164,
+      "total_alarms_found": 259,
+      "unique_alarms": 22,
+      "top_alarms": [
+        {"alarm_name": "HMI_ALARMS_1.0", "occurrences": 42, "total_duration_seconds": 15323.8, "total_duration_minutes": 255.4},
+        {"alarm_name": "HMI_ALARMS_1.1", "occurrences": 26, "total_duration_seconds": 13917.64, "total_duration_minutes": 231.96},
+        {"alarm_name": "HMI_ALARMS_1.2", "occurrences": 20, "total_duration_seconds": 13777.63, "total_duration_minutes": 229.63}
+      ]
+    },
+    "timeseries": [
+      {"start": "2025-12-10T00:00:00+00:00", "end": "2025-12-10T00:36:00+00:00", "duration_seconds": 2160},
+      {"start": "2025-12-10T00:36:10+00:00", "end": "2025-12-10T00:37:30+00:00", "duration_seconds": 80}
+    ],
+    "metadata": {
+      "data_source": "agg_counter_10sec_delta, agg_boolean_state_durations, tags_metadata",
+      "computation_note": "Alarms active during periods where production = 0"
+    }
+  },
+  "status": "ok",
+  "errors": []
+}
+```
+
+### Example Output — Error Case
+```json
+{
+  "tool": "get_productivity_kpi",
+  "inputs": {
+    "start_time": "2020-01-01T00:00:00Z",
+    "end_time": "2020-01-02T00:00:00Z"
+  },
+  "result": null,
+  "status": "error",
+  "errors": ["No data found for the given time range"]
 }
 ```
  

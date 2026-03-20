@@ -7,8 +7,7 @@ Calls Tools 1-3 and bundles all results into a single response.
 from factory_intelligence.tools.downtime import get_downtime_kpi
 from factory_intelligence.tools.productivity import get_productivity_kpi
 from factory_intelligence.tools.quality import get_quality_kpi
-from factory_intelligence.utilities.response import (error_response,
-                                                     success_response)
+from factory_intelligence.utilities.response import error_response, success_response
 from factory_intelligence.utilities.validation import validate_time_range
 
 TOOL_NAME = "get_kpi_summary"
@@ -28,7 +27,9 @@ async def get_kpi_summary(start_time, end_time, line_id=None, equipment_id=None)
         return error_response(TOOL_NAME, inputs, str(e))
 
     # Call each tool, passing optional filters
-    productivity = await get_productivity_kpi(start_time, end_time, line_id, equipment_id)
+    productivity = await get_productivity_kpi(
+        start_time, end_time, line_id, equipment_id
+    )
     quality = await get_quality_kpi(start_time, end_time, line_id, equipment_id)
     downtime = await get_downtime_kpi(start_time, end_time, line_id, equipment_id)
 

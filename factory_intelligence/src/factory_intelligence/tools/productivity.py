@@ -12,8 +12,7 @@ Formulas calculation:
 from psycopg.rows import dict_row
 
 from factory_intelligence.utilities.db import get_pool
-from factory_intelligence.utilities.response import (error_response,
-                                                     success_response)
+from factory_intelligence.utilities.response import error_response, success_response
 from factory_intelligence.utilities.validation import validate_time_range
 
 TOOL_NAME = "get_productivity_kpi"
