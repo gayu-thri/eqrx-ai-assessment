@@ -245,19 +245,75 @@ $ poetry run python -m factory_intelligence.mcp_server
 }
 ```
  
-## Some Notes
- 
-### Table Selection
-- **Tools 1 & 2** use `agg_counter_1min` — pre-aggregated 1-minute buckets for fast queries over hour/day ranges.
-- **Tool 3** uses `agg_counter_10sec_delta` — 10-second granularity is required because downtime is defined per-interval (production = 0 in a 10s window). Higher aggregates would mask short downtime periods.
-- **Tool 5** joins `agg_counter_10sec_delta` (downtime detection) with `agg_boolean_state_durations` (alarm states) and `tags_metadata` (alarm tag lookup).
- 
+## Engineering Notes
+
+### Why Specific Tables Were Used
+
+- **Tools 1 & 2 (Productivity, Quality):** Use `agg_counter_1min` — pre-aggregated 1-minute buckets are sufficient for production totals and yield calculations. Faster than scanning 10-second rows since we only need totals per time bucket.
+
+- **Tool 3 (Downtime):** Uses `agg_counter_10sec_delta` — 10-second granularity is required because downtime is defined as any interval where production = 0. Using 1-minute aggregates would mask short downtime periods (ex: a 1-min bucket could show total = 5 bottles but 4 of the 6 ten-second intervals inside had 0 production).
+
+- **Tool 4 (Summary):** Calls Tools 1-3 internally, so it uses both `agg_counter_1min` and `agg_counter_10sec_delta`.
+
+- **Tool 5 (Alarms):** Uses `agg_counter_10sec_delta` for downtime detection, then joins with `agg_boolean_state_durations` for alarm states and `tags_metadata` to identify alarm tags (`is_alarm = true`).
+
 ### Assumptions
-- Tags `HMI_TOTAL_GOOD_BOTTLES` and `HMI_TOTAL_BAD_BOTTLES` are the sole production counters.
+
+- `HMI_TOTAL_GOOD_BOTTLES` and `HMI_TOTAL_BAD_BOTTLES` are the sole production counters. Both are counter-type tags (delta values, not gauges).
 - A 10-second interval with zero total production (good + bad = 0) is classified as downtime.
-- All timestamps are stored in UTC.
- 
+- No target production value is available in the schema, so productivity is reported as absolute counts rather than a ratio.
+- All timestamps are stored and queried in UTC.
+- `line_id` and `equipment_id` are optional filters — when omitted, queries return data across all lines/equipment.
+
 ### Performance Considerations
-- Queries filter by `tag_name` and `bucket` range, both of which are indexed in TimescaleDB.
-- The connection pool (`psycopg3 AsyncConnectionPool`) reuses connections across tool calls.
-- Consecutive downtime grouping in Tool 5 uses SQL window functions (`ROW_NUMBER` gap detection) to avoid fetching all rows into Python.
+
+- Queries filter by `tag_name` and `bucket` range, both indexed by TimescaleDB's chunk-based partitioning.
+- `agg_counter_1min` is used over `agg_counter_10sec_delta` for Tools 1 & 2 to reduce the number of rows scanned (6x fewer rows per time range).
+- The async connection pool (`psycopg3 AsyncConnectionPool`, min=2, max=10) reuses connections across concurrent tool calls.
+- Consecutive downtime grouping in Tool 5 uses SQL window functions (`ROW_NUMBER` gap detection) to group intervals server-side, avoiding fetching all individual rows into Python.
+- The CASE WHEN pivot pattern combines two tags (good/bad) into a single row per bucket, halving the result set compared to separate queries.
+
+## Screenshots
+
+All screenshots below use the time range `2025-12-10T00:50:00Z` to `2025-12-10T00:53:00Z` (3-minute window). Tool 5 includes an additional screenshot with a wider time range to show a case where downtime alarms were actually triggered.
+
+### MCP Server Running
+![MCP Server - Inspector In Browser](screenshots/1mcp_server_in_browser.png)
+
+MCP Inspector connected to the server via `poetry run python -m factory_intelligence.mcp_server`. All 5 tools are listed and ready.
+
+### Tool 1: Productivity KPI
+![Productivity KPI - Input](screenshots/2mcp_server_in_browser_get_productivity_kpi(input).png)
+![Productivity KPI - Output](screenshots/2mcp_server_in_browser_get_productivity_kpi(output).png)
+
+In this 3-minute window, the line produced **287 total bottles** (285 good, 2 bad). The timeseries shows per-minute counts: 88 in the first minute, 96 in the second, and 101 in the third. Production was active and increasing across all 3 minutes.
+
+### Tool 2: Quality KPI
+![Quality KPI - Input](screenshots/3mcp_server_in_browser_get_quality_kpi(input).png)
+![Quality KPI - Output](screenshots/3mcp_server_in_browser_get_quality_kpi(output).png)
+
+Yield is **99.30%** with a defect rate of **0.70%** (2 bad out of 287 total). The 2 defective bottles occurred in the first minute (yield 97.78%), while minutes 2 and 3 had 100% yield.
+
+### Tool 3: Downtime KPI
+![Downtime KPI - Input & Output](screenshots/4mcp_server_in_browser_get_downtime_kpi(input_and_output).png)
+
+**100% availability**. All 18 ten-second intervals had production (uptime_intervals: 18, downtime_intervals: 0). The line was running continuously for the entire 3-minute window (180 seconds uptime, 0 seconds downtime).
+
+### Tool 4: KPI Summary
+![KPI Summary - Input](screenshots/5mcp_server_in_browser_get_kpi_summary(input).png)
+![KPI Summary - Output](screenshots/5mcp_server_in_browser_get_kpi_summary(output).png)
+
+Bundles all three KPIs into one response: productivity (287 bottles), quality (99.30% yield), and downtime (100% availability). This is the tool an LLM agent would call for a single dashboard view.
+
+### Tool 5: Downtime Alarms
+![Downtime Alarms - Input & Output](screenshots/6mcp_server_in_browser_get_downtime_alarms(input_and_output).png)
+
+Returns **0 downtime events** with the message "No downtime periods found in the given time range". This is consistent with Tool 3 showing 100% availability. Since there was no downtime, there are no alarms to report.
+
+### Tool 5 (with downtime): Downtime Alarms
+![Downtime Alarms with Downtime - Input](screenshots/6mcp_server_in_browser_get_downtime_alarms(input).png)
+![Downtime Alarms with Downtime - Output](screenshots/6mcp_server_in_browser_get_downtime_alarms(output).png)
+
+Using a wider time range (`2025-12-10T01:04:30+00:00` to `2025-12-10T01:23:00+00:00`) where actual downtime occurred. The tool detected **4 downtime events** and found **3 unique alarms** active during those periods: HMI_ALARMS_2.25 (22s), HMI_ALARMS_2.19 (20s), and HMI_ALARMS_2.18 (16s). The timeseries lists each downtime period. 
+
+For example, the first event ran from 01:04:30 to 01:04:50 (20 seconds) and the last from 01:22:00 to 01:23:00 (60 seconds). The tool first finds periods where production was zero, then checks which alarms were active during those periods to help identify why the line stopped.

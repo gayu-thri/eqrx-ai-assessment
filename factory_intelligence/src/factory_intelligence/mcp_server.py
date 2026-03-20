@@ -8,6 +8,8 @@ Run:
 poetry run python -m factory_intelligence.mcp_server
 """
 
+from typing import Optional
+
 from mcp.server.fastmcp import FastMCP
 
 from factory_intelligence.tools.productivity import (
@@ -26,7 +28,7 @@ mcp = FastMCP("factory-intelligence")
 # Tool #1: Productivity KPI
 @mcp.tool()
 async def get_productivity_kpi(
-    start_time: str, end_time: str, line_id: int = None, equipment_id: int = None
+    start_time: str, end_time: str, line_id: Optional[int] = None, equipment_id: Optional[int] = None
 ):
     """
     Computes productivity metrics for a given time range.
@@ -39,7 +41,7 @@ async def get_productivity_kpi(
 # Tool #2: Quality KPI
 @mcp.tool()
 async def get_quality_kpi(
-    start_time: str, end_time: str, line_id: int = None, equipment_id: int = None
+    start_time: str, end_time: str, line_id: Optional[int] = None, equipment_id: Optional[int] = None
 ):
     """
     Computes quality-related metrics including yield percentage and defect rate
@@ -52,7 +54,7 @@ async def get_quality_kpi(
 # Tool #3: Downtime KPI
 @mcp.tool()
 async def get_downtime_kpi(
-    start_time: str, end_time: str, line_id: int = None, equipment_id: int = None
+    start_time: str, end_time: str, line_id: Optional[int] = None, equipment_id: Optional[int] = None
 ):
     """
     Computes downtime and availability metrics for a given time range.
@@ -65,7 +67,7 @@ async def get_downtime_kpi(
 # Tool #4: KPI Summary/Bundle
 @mcp.tool()
 async def get_kpi_summary(
-    start_time: str, end_time: str, line_id: int = None, equipment_id: int = None
+    start_time: str, end_time: str, line_id: Optional[int] = None, equipment_id: Optional[int] = None
 ):
     """
     Returns multiple KPIs together for a single time window, suitable for a
@@ -78,7 +80,7 @@ async def get_kpi_summary(
 # Tool #5: Downtime Alarms Analysis
 @mcp.tool()
 async def get_downtime_alarms(
-    start_time: str, end_time: str, line_id: int = None, equipment_id: int = None
+    start_time: str, end_time: str, line_id: Optional[int] = None, equipment_id: Optional[int] = None
 ):
     """
     Identifies and analyzes alarms that were active during downtime periods,
