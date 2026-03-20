@@ -53,7 +53,7 @@ $ docker run hello-world
 ```
 
 ### 3. Database
-Download dump file and place it in the below location and update the path of `DUMP_FILE` in `setup_timescaledb.sh`:
+Download [dump file](https://drive.google.com/file/d/1S1MoJjClcI0RewEP9wwQmXD4dGsWlrEt/view?usp=sharing) and place it in the below location and update the path of `DUMP_FILE` in `setup_timescaledb.sh`:
 
 Path: `src/factory_intelligence/database/ProductionDB_aggregates_20251214.dump`
 ```bash
