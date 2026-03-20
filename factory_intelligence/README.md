@@ -123,7 +123,8 @@ $ poetry run python -m factory_intelligence.mcp_server
     },
     "timeseries": [
       {"timestamp": "2025-12-10T00:00:00+00:00", "good": 0.0, "bad": 0.0, "total": 0.0},
-      {"timestamp": "2025-12-10T00:01:00+00:00", "good": 0.0, "bad": 0.0, "total": 0.0}
+      {"timestamp": "2025-12-10T00:01:00+00:00", "good": 0.0, "bad": 0.0, "total": 0.0},
+      ...
     ],
     "metadata": {
       "data_source": "agg_counter_1min",
@@ -154,7 +155,8 @@ $ poetry run python -m factory_intelligence.mcp_server
       "unit": "percent"
     },
     "timeseries": [
-      {"timestamp": "2025-12-10T00:00:00+00:00", "yield_pct": 0.0, "good": 0.0, "bad": 0.0}
+      {"timestamp": "2025-12-10T00:00:00+00:00", "yield_pct": 0.0, "good": 0.0, "bad": 0.0},
+      ...
     ],
     "metadata": {
       "data_source": "agg_counter_1min",
@@ -214,12 +216,14 @@ $ poetry run python -m factory_intelligence.mcp_server
       "top_alarms": [
         {"alarm_name": "HMI_ALARMS_1.0", "occurrences": 42, "total_duration_seconds": 15323.8, "total_duration_minutes": 255.4},
         {"alarm_name": "HMI_ALARMS_1.1", "occurrences": 26, "total_duration_seconds": 13917.64, "total_duration_minutes": 231.96},
-        {"alarm_name": "HMI_ALARMS_1.2", "occurrences": 20, "total_duration_seconds": 13777.63, "total_duration_minutes": 229.63}
+        {"alarm_name": "HMI_ALARMS_1.2", "occurrences": 20, "total_duration_seconds": 13777.63, "total_duration_minutes": 229.63},
+        ...
       ]
     },
     "timeseries": [
       {"start": "2025-12-10T00:00:00+00:00", "end": "2025-12-10T00:36:00+00:00", "duration_seconds": 2160},
-      {"start": "2025-12-10T00:36:10+00:00", "end": "2025-12-10T00:37:30+00:00", "duration_seconds": 80}
+      {"start": "2025-12-10T00:36:10+00:00", "end": "2025-12-10T00:37:30+00:00", "duration_seconds": 80},
+      ...
     ],
     "metadata": {
       "data_source": "agg_counter_10sec_delta, agg_boolean_state_durations, tags_metadata",
