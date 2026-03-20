@@ -18,8 +18,12 @@ GOOD_TAG = "HMI_TOTAL_GOOD_BOTTLES"
 BAD_TAG = "HMI_TOTAL_BAD_BOTTLES"
 
 
-async def get_downtime_alarms(start_time, end_time):
+async def get_downtime_alarms(start_time, end_time, line_id=None, equipment_id=None):
     inputs = {"start_time": start_time, "end_time": end_time}
+    if line_id is not None:
+        inputs["line_id"] = line_id
+    if equipment_id is not None:
+        inputs["equipment_id"] = equipment_id
 
     # Validate time inputs
     try:
@@ -32,9 +36,19 @@ async def get_downtime_alarms(start_time, end_time):
         async with pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
 
+                # Build optional filters
+                filters = ""
+                params = {"good": GOOD_TAG, "bad": BAD_TAG, "start": start, "end": end}
+                if line_id is not None:
+                    filters += " AND line_id = %(line_id)s"
+                    params["line_id"] = line_id
+                if equipment_id is not None:
+                    filters += " AND equipment_id = %(equipment_id)s"
+                    params["equipment_id"] = equipment_id
+
                 # Step 1: Find downtime periods (group consecutive 0-production intervals)
                 await cur.execute(
-                    """
+                    f"""
                     WITH per_bucket AS (
                         SELECT
                             bucket,
@@ -43,6 +57,7 @@ async def get_downtime_alarms(start_time, end_time):
                         FROM agg_counter_10sec_delta
                         WHERE bucket >= %(start)s AND bucket < %(end)s
                           AND tag_name IN (%(good)s, %(bad)s)
+                          {filters}
                         GROUP BY bucket
                     ),
                     downtime_buckets AS (
@@ -63,7 +78,7 @@ async def get_downtime_alarms(start_time, end_time):
                     GROUP BY grp
                     ORDER BY downtime_start
                     """,
-                    {"good": GOOD_TAG, "bad": BAD_TAG, "start": start, "end": end},
+                    params,
                 )
                 downtime_periods = await cur.fetchall()
 

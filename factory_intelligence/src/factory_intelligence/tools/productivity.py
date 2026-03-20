@@ -21,8 +21,12 @@ GOOD_TAG = "HMI_TOTAL_GOOD_BOTTLES"
 BAD_TAG = "HMI_TOTAL_BAD_BOTTLES"
 
 
-async def get_productivity_kpi(start_time, end_time):
+async def get_productivity_kpi(start_time, end_time, line_id=None, equipment_id=None):
     inputs = {"start_time": start_time, "end_time": end_time}
+    if line_id is not None:
+        inputs["line_id"] = line_id
+    if equipment_id is not None:
+        inputs["equipment_id"] = equipment_id
 
     # Validate time inputs
     try:
@@ -36,8 +40,18 @@ async def get_productivity_kpi(start_time, end_time):
             async with conn.cursor(row_factory=dict_row) as cur:
 
                 # Query aggregate table
+                # Build optional filters
+                filters = ""
+                params = {"good": GOOD_TAG, "bad": BAD_TAG, "start": start, "end": end}
+                if line_id is not None:
+                    filters += " AND line_id = %(line_id)s"
+                    params["line_id"] = line_id
+                if equipment_id is not None:
+                    filters += " AND equipment_id = %(equipment_id)s"
+                    params["equipment_id"] = equipment_id
+
                 await cur.execute(
-                    """
+                    f"""
                     SELECT
                         bucket,
                         SUM(CASE WHEN tag_name = %(good)s THEN delta ELSE 0 END) AS good,
@@ -45,10 +59,11 @@ async def get_productivity_kpi(start_time, end_time):
                     FROM agg_counter_1min
                     WHERE bucket >= %(start)s AND bucket < %(end)s
                       AND tag_name IN (%(good)s, %(bad)s)
+                      {filters}
                     GROUP BY bucket
                     ORDER BY bucket
                     """,
-                    {"good": GOOD_TAG, "bad": BAD_TAG, "start": start, "end": end},
+                    params,
                 )
                 rows = await cur.fetchall()  # all good & bad rows
 

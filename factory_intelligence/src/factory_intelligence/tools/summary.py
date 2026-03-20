@@ -14,8 +14,12 @@ from factory_intelligence.utilities.validation import validate_time_range
 TOOL_NAME = "get_kpi_summary"
 
 
-async def get_kpi_summary(start_time, end_time):
+async def get_kpi_summary(start_time, end_time, line_id=None, equipment_id=None):
     inputs = {"start_time": start_time, "end_time": end_time}
+    if line_id is not None:
+        inputs["line_id"] = line_id
+    if equipment_id is not None:
+        inputs["equipment_id"] = equipment_id
 
     # Validate inputs
     try:
@@ -23,10 +27,10 @@ async def get_kpi_summary(start_time, end_time):
     except ValueError as e:
         return error_response(TOOL_NAME, inputs, str(e))
 
-    # Call each tool
-    productivity = await get_productivity_kpi(start_time, end_time)
-    quality = await get_quality_kpi(start_time, end_time)
-    downtime = await get_downtime_kpi(start_time, end_time)
+    # Call each tool, passing optional filters
+    productivity = await get_productivity_kpi(start_time, end_time, line_id, equipment_id)
+    quality = await get_quality_kpi(start_time, end_time, line_id, equipment_id)
+    downtime = await get_downtime_kpi(start_time, end_time, line_id, equipment_id)
 
     # Collect errors from any failed tools
     errors = []
