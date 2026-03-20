@@ -69,8 +69,8 @@ Data range: December 5–14, 2025 (9 days of production data).
 ## Run tests
 Make sure Docker container is still running
 ```bash
-# Be inside eqrx-ai-assessment/factory_intelligence level where 
-# ls gives you onboarding.md, pyproject.to, tech_notes.md, poetry.lock, README.md, src, tests
+# Be inside eqrx-ai-assessment/factory_intelligence level
+# ls gives you pyproject.toml, poetry.lock, README.md, src, tests
 $ poetry run python tests/test_tools.py
 ```
 
@@ -94,8 +94,8 @@ $ poetry run python -m factory_intelligence.mcp_server
 |-----------|------|----------|
 | `start_time` | ISO 8601 string | Yes |
 | `end_time` | ISO 8601 string | Yes |
-| `line_id` | string | No |
-| `equipment_id` | string | No |
+| `line_id` | integer | No |
+| `equipment_id` | integer | No |
  
 ### Example Tool Call
 ```json
