@@ -2,12 +2,12 @@
 
 This project has MCP server that exposes 5 KPI tools for a factory production line. An LLM agent calls these tools via MCP to answer questions like "Show me productivity KPI for last week". 
 
-Data flow
+**Data flow**
 ```
 Factory sensors -> TimescaleDB (stores data) -> MCP tools (computes KPIs) -> LLM agent (interprets) -> User's dashboard (displays)
 ```
 
-Project structure
+**Project structure**
 ```
 ├── tests
   ├── test_tools.py          <- Test for all 5 tools
