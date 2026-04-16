@@ -75,19 +75,26 @@ $ poetry run python tests/test_tools.py
 ```
 
 ## Run MCP server locally
+Start the MCP server, it will just hand (no output), means it's listening.
 ```bash
+$ cd /Users/gayu/github/eqrx-ai-assessment/factory_intelligence
 $ poetry run python -m factory_intelligence.mcp_server
+```
+Open inspector in a new terminal,
+```bash
+$ cd /Users/gayu/github/eqrx-ai-assessment/factory_intelligence
+$ mcp dev src/factory_intelligence/mcp_server.py
 ```
 
 ## Tools
  
 | Tool | Description | Data Source |
 |------|-------------|------------|
-| `get_productivity_kpi` | Total production, good/bad counts | `agg_counter_1min` |
-| `get_quality_kpi` | Yield %, defect rate % | `agg_counter_1min` |
-| `get_downtime_kpi` | Uptime/downtime, availability % | `agg_counter_10sec_delta` |
-| `get_kpi_summary` | All KPIs bundled | Both tables above |
-| `get_downtime_alarms` | Alarms active during downtime | `agg_counter_10sec_delta`, `agg_boolean_state_durations` |
+| `get_productivity_kpi` | Total production, good/bad counts | `agg_counter_1min` (sufficient for totals) |
+| `get_quality_kpi` | Yield %, defect rate % | `agg_counter_1min` (only need per-minute totals) |
+| `get_downtime_kpi` | Uptime/downtime, availability % | `agg_counter_10sec_delta` (need granularity to catch short stops) |
+| `get_kpi_summary` | All KPIs bundled | Both tables above (calls tools 1-3 internally) |
+| `get_downtime_alarms` | Alarms active during downtime | `agg_counter_10sec_delta`, `agg_boolean_state_durations` (find zero-prod intervals, then join alarm states) |
  
 ### Input Schema (all tools)
 | Parameter | Type | Required |
